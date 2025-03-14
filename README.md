@@ -13,18 +13,26 @@ In this way the user cannot mess with the configuration and can only remove the 
   - Version 4.4
   - Default Layout
   - Bootstrap 5 Layout
+  - Installation-Path:
+    - templates/YOUR-TEMPLATE/com_virtuemart/cart/
 
 - VP OnePageCheckout Plugin
   - Version 7.28
   - Normal Layout
   - Narrow Layout
+  - Installation-Path:
+    - templates/YOUR-TEMPLATE/plg_system_vponepagecheckout/
 
 - Rupostel OnePageCheckout 
   - Version 2.0.452.100125
   - Theme yootheme_2col
+  - Installation-Path:
+    - components/com_onepage/themes/YOUR-YOOTHEME-2COL-THEME/overrides/
 
 - VP Neoteric Template
   - Version 1.9
+  - Installation-Path:
+    - templates/YOUR-TEMPLATE/com_virtuemart/cart/
 
 <br>
 

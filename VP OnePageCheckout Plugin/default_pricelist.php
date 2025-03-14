@@ -179,6 +179,67 @@ if (!empty($css)) {
     $document->addStyleDeclaration($css);
 }
 ?>
+<?php /* Breakdesigns Product Builder Modification */ ?>
+<style>
+    tr.product-builder-header td:first-child {
+        cursor: pointer;
+    }
+
+    tr.product-builder-header td {
+        background: #eee !important;
+    }
+
+    .product-builder-child td {
+        background: #fefede !important;
+    }
+
+    .product-builder-child-hide {
+        display: none !important;
+    }
+
+    .product-builder-expand-btn {
+        margin-right: 5px;
+    }
+</style>
+<script>
+    jQuery(document).ready(function($) {
+        let productBuilderHeader = $('.product-builder-header');
+
+        if (productBuilderHeader.length > 0) {
+            productBuilderHeader.each(function() {
+                let productBuilderUuid = $(this).attr('id').split('_').pop();
+                let expandField = $('#product-builder-expand_' + productBuilderUuid);
+
+                expandField.on('click', function() {
+                    let productBuilderUuid = $(this).attr('id').split('_').pop();
+                    let childProducts = $('.product-builder_' + productBuilderUuid + '.product-builder-child');
+
+                    let btn = $('#product-builder-expand-btn_' + productBuilderUuid + ' i');
+
+                    if (childProducts.hasClass('product-builder-child-hide')) {
+                        childProducts.removeClass('product-builder-child-hide');
+                        btn.removeClass('fa-eye-slash');
+                        btn.addClass('fa-eye');
+                    } else {
+                        childProducts.addClass('product-builder-child-hide');
+                        btn.removeClass('fa-eye');
+                        btn.addClass('fa-eye-slash');
+                    }
+                });
+            });
+        }
+    });
+</script>
+<?php /* END Breakdesigns Product Builder Modification */ ?>
+<?php /* Breakdesigns Product Builder Modification */ ?>
+<?php
+	require_once JPATH_SITE.DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_productbuilder'.DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR.'Helper'.DIRECTORY_SEPARATOR.'pbcartHelper.php';
+	
+	$productBuilderProducts = [];
+	$productBuilderClass    = '';
+	$productBuilderPrices   = productBuilderCartHelper::getPbProductPrices($this->cart->products, $this->cart->pricesUnformatted, $this->cart->pricesCurrency);
+?>
+<?php /* END Breakdesigns Product Builder Modification */ ?>
 <table class="cart-summary proopc-table-striped<?php echo $this->section_class_suffix; ?>" width="100%" border="0">
 
     <thead>
@@ -212,7 +273,79 @@ if (!empty($css)) {
     <tbody>
         <?php // Show all products?>
         <?php foreach ($this->cart->products as $pkey => $prow) : ?>
-            <tr valign="top" class="cart-p-list">
+            <?php /* Breakdesigns Product Builder Modification */ ?>
+            <?php
+            $productBuilderId   = $this->cart->cartProductsData[$pkey]['customProductData']['pbproduct_id'];
+            $productBuilderUuid = $this->cart->cartProductsData[$pkey]['customProductData']['pbproduct_uuid'];
+            
+            if (!empty($productBuilderUuid))
+            {
+                if (!in_array($productBuilderUuid, $productBuilderProducts, true))
+                {
+                    $productBuilderProducts[] = $productBuilderUuid;
+                    $productBuilderObj        = productBuilderCartHelper::getPbProduct($productBuilderId . '_' . $productBuilderUuid);
+                    $productBuilderClass      = 'product-builder_' . $productBuilderUuid . ' product-builder-child product-builder-child-hide';
+                    if ($productBuilderObj)
+                    { ?>
+                        <tr valign="top" class="cart-p-list product-builder-header" id="product-builder-header_<?php echo $productBuilderUuid ?>">
+                            <td class="col-name" align="left" id="product-builder-expand_<?php echo $productBuilderUuid ?>">
+                                <div class="cart-product-description with-image clearfix">
+                                    <div class="cart-images">
+                                        <img src="<?php echo $productBuilderObj->image_path; ?>" class="img-responsive" alt="<?php echo $productBuilderObj->name;?>">
+                                    </div>
+                                    <span class="product-builder-expand-btn" id="product-builder-expand-btn_<?php echo $productBuilderUuid ?>"><i class="fas fa-eye-slash"></i></span>
+		                            <?php echo $productBuilderObj->name; ?>
+                                </div>
+                            </td>
+                            <td class="col-sku" align="left" >
+                                <span class="product-sku-text"><?php echo $productBuilderObj->sku; ?></span>
+                                <br><span class="text-muted"><?php echo $productBuilderUuid; ?></span>
+                            </td>
+                            <td class="col-price nowrap" align="right" >
+			                    <?php if ($productBuilderPrices[$productBuilderUuid]['discountedPriceWithoutTax']) : ?>
+                                    <span class="PricediscountedPriceWithoutTax"><?php echo $this->currencyDisplay->priceDisplay($productBuilderPrices[$productBuilderUuid]['discountedPriceWithoutTax']); ?></span>
+			                    <?php else : ?>
+                                    <span class="PricebasePriceVariant"><?php echo $this->currencyDisplay->priceDisplay($productBuilderPrices[$productBuilderUuid]['basePriceVariant']); ?></span>
+			                    <?php endif; ?>
+                            </td>
+                            <td class="col-qty cart-p-qty nowrap" align="right" >
+                                <div class="proopc-input-append">
+                                    <span>1</span>
+                                </div>
+			                    <?php if ($this->params->get('quantity_delete_btn', 1)) : ?>
+                                    <a class="remove_from_cart proopc-btn <?php echo $this->btn_class_1 ?>" title="<?php echo vmText::_('COM_VIRTUEMART_CART_DELETE') ?>" href="<?php echo Joomla\CMS\Router\Route::_('index.php?task=pbproduct_remove&pb_uuid=' . $productBuilderUuid); ?>"><i class="proopc-icon-trash"></i></a>
+			                    <?php endif; ?>
+                            </td>
+		                    <?php if (VmConfig::get('show_tax')) : ?>
+                                <td class="col-tax nowrap" align="right">
+				                    <?php if (!empty($productBuilderPrices[$productBuilderUuid]['taxAmount'])) : ?>
+					                    <?php echo $this->currencyDisplay->createPriceDiv('taxAmount', '', $productBuilderPrices[$productBuilderUuid], false, false, 1); ?>
+				                    <?php endif; ?>
+                                </td>
+		                    <?php endif; ?>
+                            <td class="col-discount nowrap" align="right">
+			                    <?php if (!empty($productBuilderPrices[$productBuilderUuid]['discountAmount'])) : ?>
+				                    <?php echo $this->currencyDisplay->createPriceDiv('discountAmount', '', $productBuilderPrices[$productBuilderUuid], false, false, 1); ?>
+			                    <?php endif; ?>
+                            </td>
+                            <td class="col-total nowrap" align="right">
+			                    <?php if (VmConfig::get('checkout_show_origprice', 1) && !empty($productBuilderPrices[$productBuilderUuid]['basePriceWithTax']) && $productBuilderPrices[$productBuilderUuid]['basePriceWithTax'] != $productBuilderPrices[$productBuilderUuid]['salesPrice']) : ?>
+                                    <span class="line-through"><?php echo $this->currencyDisplay->createPriceDiv('basePriceWithTax', '', $productBuilderPrices[$productBuilderUuid], true, false, 1); ?></span><br/>
+			                    <?php elseif (VmConfig::get('checkout_show_origprice', 1) && empty($productBuilderPrices[$productBuilderUuid]['basePriceWithTax']) && $productBuilderPrices[$productBuilderUuid]['basePriceVariant'] != $productBuilderPrices[$productBuilderUuid]['salesPrice']) : ?>
+                                    <span class="line-through"><?php echo $this->currencyDisplay->createPriceDiv('basePriceVariant', '', $productBuilderPrices[$productBuilderUuid], true, false, 1); ?></span><br/>
+			                    <?php endif; ?>
+			                    <?php echo $this->currencyDisplay->createPriceDiv('salesPrice', '', $productBuilderPrices[$productBuilderUuid], false, false, 1); ?>
+                            </td>
+                        </tr>
+                        <?php
+                    }
+                }
+            } else {
+	            $productBuilderClass = '';
+            }
+	        ?>
+	        <?php /* END Breakdesigns Product Builder Modification */ ?>
+            <tr valign="top" class="cart-p-list <?php /* Breakdesigns Product Builder Modification */ ?> <?php echo $productBuilderClass; ?> <?php /* END Breakdesigns Product Builder Modification */ ?>">
                 <td class="col-name" align="left" >
                     <?php if ($prow->virtuemart_media_id && !empty($prow->images[0]) && VmConfig::get('oncheckout_show_images')) : ?>
                         <div class="cart-product-description with-image clearfix">
@@ -240,22 +373,30 @@ if (!empty($css)) {
                     <?php endif; ?>
                 </td>
                 <td class="col-qty cart-p-qty nowrap" align="right" >
-                    <?php $step = $prow->step_order_level ? (float) $prow->step_order_level : 1; ?>
-                    <?php $step = ($step == 0) ? 1 : $step; ?>
-                    <?php $min = $prow->min_order_level ? (float) $prow->min_order_level : 1; ?>
-                    <?php $min = ($min == 0) ? 1 : $min; ?>
-                    <?php $max = $prow->max_order_level ? (float) $prow->max_order_level : null; ?>
-                    <?php $max = ($max == 0) ? null : $max; ?>
-
-                    <div class="proopc-input-append">
-                        <input type="number" class="input-ultra-mini proopc-qty-input" size="1" maxlength="4" name="quantity[<?php echo $pkey; ?>]" value="<?php echo $prow->quantity ?>" data-quantity="<?php echo $prow->quantity ?>" step="<?php echo (int) $step ?>" min="<?php echo $min ?>"<?php echo $max ? ' max="' . $max . '"' : ''; ?> />
-                        <?php if ($this->params->get('quantity_update_btn', 1)) : ?>
-                            <button class="proopc-btn <?php echo $this->btn_class_1 ?> proopc-task-updateqty" name="updatecart.<?php echo $pkey ?>" title="<?php echo  JText::_('COM_VIRTUEMART_CART_UPDATE') ?>" disabled><i class="proopc-icon-refresh"></i></button>
+	                <?php /* Breakdesigns Product Builder Modification */ ?>
+	                <?php if(empty($productBuilderClass)) : ?>
+	                <?php /* END Breakdesigns Product Builder Modification */ ?>
+                        <?php $step = $prow->step_order_level ? (float) $prow->step_order_level : 1; ?>
+                        <?php $step = ($step == 0) ? 1 : $step; ?>
+                        <?php $min = $prow->min_order_level ? (float) $prow->min_order_level : 1; ?>
+                        <?php $min = ($min == 0) ? 1 : $min; ?>
+                        <?php $max = $prow->max_order_level ? (float) $prow->max_order_level : null; ?>
+                        <?php $max = ($max == 0) ? null : $max; ?>
+    
+                        <div class="proopc-input-append">
+                            <input type="number" class="input-ultra-mini proopc-qty-input" size="1" maxlength="4" name="quantity[<?php echo $pkey; ?>]" value="<?php echo $prow->quantity ?>" data-quantity="<?php echo $prow->quantity ?>" step="<?php echo (int) $step ?>" min="<?php echo $min ?>"<?php echo $max ? ' max="' . $max . '"' : ''; ?> />
+                            <?php if ($this->params->get('quantity_update_btn', 1)) : ?>
+                                <button class="proopc-btn <?php echo $this->btn_class_1 ?> proopc-task-updateqty" name="updatecart.<?php echo $pkey ?>" title="<?php echo  JText::_('COM_VIRTUEMART_CART_UPDATE') ?>" disabled><i class="proopc-icon-refresh"></i></button>
+                            <?php endif; ?>
+                        </div>
+                        <?php if ($this->params->get('quantity_delete_btn', 1)) : ?>
+                            <button class="remove_from_cart proopc-btn <?php echo $this->btn_class_1 ?> proopc-task-deleteproduct" name="delete.<?php echo $pkey ?>" title="<?php echo JText::_('COM_VIRTUEMART_CART_DELETE') ?>" data-vpid="<?php echo $prow->cart_item_id  ?>" disabled><i class="proopc-icon-trash"></i></button>
                         <?php endif; ?>
-                    </div>
-                    <?php if ($this->params->get('quantity_delete_btn', 1)) : ?>
-                        <button class="remove_from_cart proopc-btn <?php echo $this->btn_class_1 ?> proopc-task-deleteproduct" name="delete.<?php echo $pkey ?>" title="<?php echo JText::_('COM_VIRTUEMART_CART_DELETE') ?>" data-vpid="<?php echo $prow->cart_item_id  ?>" disabled><i class="proopc-icon-trash"></i></button>
-                    <?php endif; ?>
+                    <?php /* Breakdesigns Product Builder Modification */ ?>
+	                <?php else : ?>
+                        <span><?php echo $prow->quantity; ?></span>
+	                <?php endif; ?>
+	                <?php /* END Breakdesigns Product Builder Modification */ ?>
                 </td>
                 <?php if (VmConfig::get('show_tax')) : ?>
                     <td class="col-tax nowrap" align="right">

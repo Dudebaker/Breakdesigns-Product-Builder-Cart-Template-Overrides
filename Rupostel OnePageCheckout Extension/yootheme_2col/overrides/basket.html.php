@@ -15,6 +15,67 @@
 $config = OPCconfig::getValue('theme_config', $selected_template, 0, false, false); 
 
 ?>
+<?php /* Breakdesigns Product Builder Modification */ ?>
+<style>
+    .product-builder-expand {
+        cursor: pointer;
+    }
+
+    div.product-builder-header {
+        background: #eee !important;
+    }
+
+    .product-builder-child {
+        background: #fefede !important;
+    }
+
+    .product-builder-child-hide {
+        display: none;
+    }
+
+    .product-builder-expand-btn {
+        margin-right: 5px;
+    }
+</style>
+<script>
+    jQuery(document).ready(function($) {
+        let productBuilderHeader = $('.product-builder-header');
+
+        if (productBuilderHeader.length > 0) {
+            productBuilderHeader.each(function() {
+                let productBuilderUuid = $(this).attr('id').split('_').pop();
+                let expandField = $('#product-builder-expand_' + productBuilderUuid);
+
+                expandField.on('click', function() {
+                    let productBuilderUuid = $(this).attr('id').split('_').pop();
+                    let childProducts = $('.product-builder_' + productBuilderUuid + '.product-builder-child');
+
+                    let btn = $('#product-builder-expand-btn_' + productBuilderUuid + ' i');
+
+                    if (childProducts.hasClass('product-builder-child-hide')) {
+                        childProducts.removeClass('product-builder-child-hide');
+                        btn.removeClass('fa-eye-slash');
+                        btn.addClass('fa-eye');
+                    } else {
+                        childProducts.addClass('product-builder-child-hide');
+                        btn.removeClass('fa-eye');
+                        btn.addClass('fa-eye-slash');
+                    }
+                });
+            });
+        }
+    });
+</script>
+<?php /* END Breakdesigns Product Builder Modification */ ?>
+<?php /* Breakdesigns Product Builder Modification */ ?>
+<?php
+	require_once JPATH_SITE.DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_productbuilder'.DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR.'Helper'.DIRECTORY_SEPARATOR.'pbcartHelper.php';
+	
+	$productBuilderProducts = [];
+	$productBuilderClass    = '';
+	$productBuilderPrices   = productBuilderCartHelper::getPbProductPrices($this->cart->products, $this->cart->pricesUnformatted, $this->cart->pricesCurrency);
+?>
+<?php /* END Breakdesigns Product Builder Modification */ ?>
 <div id="basket_container" class="cart-view">
 <div class="inside">
 <div class="black-basket cart-summary">
@@ -60,7 +121,43 @@ echo $product['info']->mf_name;
 */
 
 ?>
-  <div class="op_basket_row op_basket_rows section<?php echo $i ?> set">
+<?php /* Breakdesigns Product Builder Modification */ ?>
+<?php
+     $productBuilderId   = $product['product']->customProductData['pbproduct_id'];
+     $productBuilderUuid = $product['product']->customProductData['pbproduct_uuid'];
+     
+     if (!empty($productBuilderUuid))
+     {
+         if (!in_array($productBuilderUuid, $productBuilderProducts, true))
+         {
+             $productBuilderProducts[] = $productBuilderUuid;
+             $productBuilderObj        = productBuilderCartHelper::getPbProduct($productBuilderId . '_' . $productBuilderUuid);
+             $productBuilderClass      = 'product-builder_' . $productBuilderUuid . ' product-builder-child product-builder-child-hide';
+             if ($productBuilderObj)
+             { ?>
+                 <div class="op_basket_row op_basket_rows section<?php echo $i ?> set product-builder-header" id="product-builder-header_<?php echo $productBuilderUuid ?>">
+                     <div class="op_col1">&nbsp;</div>
+                     <div class="op_col2 product-builder-expand" id="product-builder-expand_<?php echo $productBuilderUuid ?>">
+                         <img src="<?php echo $productBuilderObj->image_path; ?>" alt="<?php echo $productBuilderObj->name;?>" style="height: 100px; width: 100px; object-fit: contain">
+                         <span class="product-builder-expand-btn" id="product-builder-expand-btn_<?php echo $productBuilderUuid ?>"><i class="fas fa-eye-slash"></i>&nbsp;<?php echo '<span class="cart-title">' . $productBuilderObj->name . '</span>'; ?></span>
+                     </div>
+                     <div class="op_col4" style="<?php if (empty($config->show_sku)) { echo ' display: none; '; } ?>">
+                         <?php echo $productBuilderObj->sku; ?>
+                         <br><span class="text-muted"><?php echo $productBuilderUuid; ?></span>
+                     </div>
+                     <div class="op_col5"><?php echo $this->currencyDisplay->createPriceDiv ('salesPrice', '', $productBuilderPrices[$productBuilderUuid], FALSE, FALSE, 1) ?>&nbsp;</div>
+                     <div class="op_col6"><div class="mobile_unit_price"><?php echo $this->currencyDisplay->createPriceDiv ('salesPrice', '', $productBuilderPrices[$productBuilderUuid], FALSE, FALSE, 1) ?></div><span>1</span>&nbsp;<a class="vmicon vm2-remove_from_cart" title="<?php echo vmText::_('COM_VIRTUEMART_CART_DELETE') ?>" href="<?php echo Joomla\CMS\Router\Route::_('index.php?task=pbproduct_remove&pb_uuid=' . $productBuilderUuid); ?>"><i class="fas fa-trash fa-lg" aria-hidden="true"></i></a></div>
+                     <div class="op_col7"><?php echo $this->currencyDisplay->createPriceDiv ('salesPrice', '', $productBuilderPrices[$productBuilderUuid], FALSE, FALSE, 1) ?>&nbsp;</div>
+                 </div>
+                 <?php
+             }
+         }
+     } else {
+	     $productBuilderClass = '';
+     }
+	?>
+	<?php /* END Breakdesigns Product Builder Modification */ ?>
+  <div class="op_basket_row op_basket_rows section<?php echo $i ?> set <?php /* Breakdesigns Product Builder Modification */ ?> <?php echo $productBuilderClass; ?> <?php /* END Breakdesigns Product Builder Modification */ ?>">
     <div class="op_col1">&nbsp;</div>
     <div class="op_col2">
 	<?php echo $this->op_show_image($product['product_full_image'], '', 100, 100, 'product'); ?>&nbsp;
@@ -76,7 +173,16 @@ if (!empty($product['info']->product_s_desc))
 	</div>
     <div class="op_col4" style="<?php if (empty($config->show_sku)) { echo ' display: none; '; } ?>"><?php echo $product['product_sku'] ?>&nbsp;</div>
     <div class="op_col5"><?php echo $product['product_price'] ?>&nbsp;</div>
-    <div class="op_col6"><div class="mobile_unit_price"><?php echo $product['product_price'] ?></div><?php echo $product['update_form'] ?><?php echo $product['delete_form'];?></div>
+    <div class="op_col6"><div class="mobile_unit_price"><?php echo $product['product_price'] ?></div>
+        <?php /* Breakdesigns Product Builder Modification */ ?>
+        <?php if(empty($productBuilderClass)) : ?>
+        <?php /* END Breakdesigns Product Builder Modification */ ?>
+            <?php echo $product['update_form'] ?><?php echo $product['delete_form'];?>
+	  <?php else : ?>
+          <span><?php echo $product['product_quantity']; ?></span>
+	  <?php endif; ?>
+	  <?php /* END Breakdesigns Product Builder Modification */ ?>
+    </div>
     <div class="op_col7"><?php echo $product['subtotal'] ?>&nbsp;</div>
   </div>
   

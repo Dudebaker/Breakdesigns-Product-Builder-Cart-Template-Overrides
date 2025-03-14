@@ -15,6 +15,67 @@
 // Check to ensure this file is included in Joomla!
 defined ('_JEXEC') or die('Restricted access');
 ?>
+<?php /* Breakdesigns Product Builder Modification */ ?>
+<style>
+    tr.product-builder-header td:first-child {
+        cursor: pointer;
+    }
+
+    tr.product-builder-header td {
+        background: #eee;
+    }
+
+    .product-builder-child td {
+        background: #fefede;
+    }
+
+    .product-builder-child-hide {
+        display: none;
+    }
+
+    .product-builder-expand-btn {
+        margin-right: 5px;
+    }
+</style>
+<script>
+    jQuery(document).ready(function($) {
+        let productBuilderHeader = $('.product-builder-header');
+
+        if (productBuilderHeader.length > 0) {
+            productBuilderHeader.each(function() {
+                let productBuilderUuid = $(this).attr('id').split('_').pop();
+                let expandField = $('#product-builder-expand_' + productBuilderUuid);
+
+                expandField.on('click', function() {
+                    let productBuilderUuid = $(this).attr('id').split('_').pop();
+                    let childProducts = $('.product-builder_' + productBuilderUuid + '.product-builder-child');
+
+                    let btn = $('#product-builder-expand-btn_' + productBuilderUuid + ' i');
+
+                    if (childProducts.hasClass('product-builder-child-hide')) {
+                        childProducts.removeClass('product-builder-child-hide');
+                        btn.removeClass('fa-eye-slash');
+                        btn.addClass('fa-eye');
+                    } else {
+                        childProducts.addClass('product-builder-child-hide');
+                        btn.removeClass('fa-eye');
+                        btn.addClass('fa-eye-slash');
+                    }
+                });
+            });
+        }
+    });
+</script>
+<?php /* END Breakdesigns Product Builder Modification */ ?>
+<?php /* Breakdesigns Product Builder Modification */ ?>
+<?php
+	require_once JPATH_SITE.DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_productbuilder'.DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR.'Helper'.DIRECTORY_SEPARATOR.'pbcartHelper.php';
+	
+	$productBuilderProducts = [];
+	$productBuilderClass    = '';
+	$productBuilderPrices   = productBuilderCartHelper::getPbProductPrices($this->cart->products, $this->cart->pricesUnformatted, $this->cart->pricesCurrency);
+?>
+<?php /* END Breakdesigns Product Builder Modification */ ?>
 <fieldset class="vm-fieldset-pricelist">
 <table
 	class="cart-summary"
@@ -46,11 +107,79 @@ defined ('_JEXEC') or die('Restricted access');
 <?php
 $i = 1;
 
-foreach ($this->cart->products as $pkey => $prow) {
+foreach ($this->cart->products as $pkey => $prow) { ?>
+	<?php /* Breakdesigns Product Builder Modification */ ?>
+	<?php
+		$productBuilderId   = $this->cart->cartProductsData[$pkey]['customProductData']['pbproduct_id'];
+		$productBuilderUuid = $this->cart->cartProductsData[$pkey]['customProductData']['pbproduct_uuid'];
+		
+		if (!empty($productBuilderUuid))
+		{
+            if (!in_array($productBuilderUuid, $productBuilderProducts, true))
+            {
+                $productBuilderProducts[] = $productBuilderUuid;
+                $productBuilderObj        = productBuilderCartHelper::getPbProduct($productBuilderId . '_' . $productBuilderUuid);
+                $productBuilderClass      = 'product-builder_' . $productBuilderUuid . ' product-builder-child product-builder-child-hide';
+                if ($productBuilderObj)
+                { ?>
+                    <tr style="vertical-align: top" class="sectiontableentry<?php echo $i; if(!empty($prow->class)) echo ' '.$prow->class ?> product-builder-header" id="product-builder-header_<?php echo $productBuilderUuid ?>">
+                        <td class="vm-cart-item-name" id="product-builder-expand_<?php echo $productBuilderUuid ?>">
+                            <input type="hidden" name="cartpos[]" value="<?php echo $pkey ?>">
+			                <?php if ($prow->virtuemart_media_id) { ?>
+                                <span class="cart-images">
+                                    <img src="<?php echo $productBuilderObj->image_path; ?>" alt="<?php echo $productBuilderObj->name;?>" style="height: 90px; width: 90px; object-fit: contain">
+                                </span>
+			                <?php } ?>
+                            <span class="product-builder-expand-btn" id="product-builder-expand-btn_<?php echo $productBuilderUuid ?>"><i class="fas fa-eye-slash"></i></span>
+	                        <?php echo $productBuilderObj->name; ?>
+                        </td>
+                        <td class="vm-cart-item-sku" >
+	                        <span class="text-muted"><?php echo $productBuilderObj->sku; ?></span>
+                            <br><span class="text-muted"><?php echo $productBuilderUuid; ?></span>
+                        </td>
+                        <td class="vm-cart-item-basicprice" >
+			                <?php
+				                if (VmConfig::get ('checkout_show_origprice', 1) && $productBuilderPrices[$productBuilderUuid]['discountedPriceWithoutTax'] != $productBuilderPrices[$productBuilderUuid]['priceWithoutTax']) {
+					                echo '<span class="line-through">' . $this->currencyDisplay->createPriceDiv ('basePriceVariant', '', $productBuilderPrices[$productBuilderUuid]->prices, TRUE, FALSE) . '</span><br />';
+				                }
+				                if ($productBuilderPrices[$productBuilderUuid]['discountedPriceWithoutTax']) {
+					                echo $this->currencyDisplay->createPriceDiv ('discountedPriceWithoutTax', '', $productBuilderPrices[$productBuilderUuid], FALSE, FALSE, 1.0, false, true);
+				                } else {
+					                echo $this->currencyDisplay->createPriceDiv ('basePriceVariant', '', $productBuilderPrices[$productBuilderUuid], FALSE, FALSE, 1.0, false, true);
+				                } ?>
+                        </td>
+                        <td class="vm-cart-item-quantity" >
+                            <span>1</span>
+                            <a class="vmicon vm2-remove_from_cart" title="<?php echo vmText::_('COM_VIRTUEMART_CART_DELETE') ?>" href="<?php echo Joomla\CMS\Router\Route::_('index.php?task=pbproduct_remove&pb_uuid=' . $productBuilderUuid); ?>"><i class="fas fa-trash fa-lg" aria-hidden="true"></i></a>
+                        </td>
+		                <?php if (VmConfig::get ('show_tax')) { ?>
+                            <td class="vm-cart-item-tax" ><?php echo "<span class='priceColor2'>" . $this->currencyDisplay->createPriceDiv ('taxAmount', '', $productBuilderPrices[$productBuilderUuid], FALSE, FALSE, 1, false, true) . "</span>" ?></td>
+		                <?php } ?>
+                        <td class="vm-cart-item-discount" ><?php echo "<span class='priceColor2'>" . $this->currencyDisplay->createPriceDiv ('discountAmount', '', $productBuilderPrices[$productBuilderUuid], FALSE, FALSE, 1, false, true) . "</span>" ?></td>
+                        <td class="vm-cart-item-total">
+			                <?php
+				                if (VmConfig::get ('checkout_show_origprice', 1) && !empty($productBuilderPrices[$productBuilderUuid]['basePriceWithTax']) && $productBuilderPrices[$productBuilderUuid]['basePriceWithTax'] != $productBuilderPrices[$productBuilderUuid]['salesPrice']) {
+					                echo '<span class="line-through">' . $this->currencyDisplay->createPriceDiv ('basePriceWithTax', '', $productBuilderPrices[$productBuilderUuid], TRUE, FALSE, 1) . '</span><br />';
+				                }
+                                elseif (VmConfig::get ('checkout_show_origprice', 1) && empty($productBuilderPrices[$productBuilderUuid]['basePriceWithTax']) && !empty($productBuilderPrices[$productBuilderUuid]['basePriceVariant']) && $productBuilderPrices[$productBuilderUuid]['basePriceVariant'] != $productBuilderPrices[$productBuilderUuid]['salesPrice']) {
+					                echo '<span class="line-through">' . $this->currencyDisplay->createPriceDiv ('basePriceVariant', '', $productBuilderPrices[$productBuilderUuid], TRUE, FALSE, 1) . '</span><br />';
+				                }
+				                echo $this->currencyDisplay->createPriceDiv ('salesPrice', '', $productBuilderPrices[$productBuilderUuid], FALSE, FALSE, 1) ?></td>
+                    </tr>
+                    <?php
+                }
+            }
+		} else {
+			$productBuilderClass = '';
+		}
+        ?>
+        <?php /* END Breakdesigns Product Builder Modification */ ?>
+    <?php
+    
 	$prow->prices = array_merge($prow->prices,$this->cart->cartPrices[$pkey]);
 ?>
 
-<tr style="vertical-align: top" class="sectiontableentry<?php echo $i; if(!empty($prow->class)) echo ' '.$prow->class ?>">
+<tr style="vertical-align: top" class="sectiontableentry<?php echo $i; if(!empty($prow->class)) echo ' '.$prow->class ?> <?php /* Breakdesigns Product Builder Modification */ ?> <?php echo $productBuilderClass; ?> <?php /* END Breakdesigns Product Builder Modification */ ?>">
 	<td class="vm-cart-item-name" >
 		<input type="hidden" name="cartpos[]" value="<?php echo $pkey ?>">
 		<?php if ($prow->virtuemart_media_id) { ?>
@@ -76,26 +205,35 @@ foreach ($this->cart->products as $pkey => $prow) {
 			echo $this->currencyDisplay->createPriceDiv ('basePriceVariant', '', $prow->prices, FALSE, FALSE, 1.0, false, true);
 		} ?>
 	</td>
-	<td class="vm-cart-item-quantity" ><?php
-		if ($prow->step_order_level)
-			$step=$prow->step_order_level;
-		else
-			$step=1;
-		if($step==0)
-			$step=1;
-		?>
-		<input type="text"
-			onblur="Virtuemart.checkQuantity(this,<?php echo $step?>,'<?php echo vmText::_ ('COM_VIRTUEMART_WRONG_AMOUNT_ADDED',true)?>');"
-			onclick="Virtuemart.checkQuantity(this,<?php echo $step?>,'<?php echo vmText::_ ('COM_VIRTUEMART_WRONG_AMOUNT_ADDED',true)?>');"
-			onchange="Virtuemart.checkQuantity(this,<?php echo $step?>,'<?php echo vmText::_ ('COM_VIRTUEMART_WRONG_AMOUNT_ADDED',true)?>');"
-			onsubmit="Virtuemart.checkQuantity(this,<?php echo $step?>,'<?php echo vmText::_ ('COM_VIRTUEMART_WRONG_AMOUNT_ADDED',true)?>');"
-			title="<?php echo  vmText::_('COM_VIRTUEMART_CART_UPDATE') ?>" class="quantity-input js-recalculate" size="3" maxlength="4" name="quantity[<?php echo $pkey; ?>]" value="<?php echo $prow->quantity ?>" />
-        <!--span class="quantity-controls js-recalculate">
-				<input type="button" class="quantity-controls quantity-plus"/>
-				<input type="button" class="quantity-controls quantity-minus"/>
-        </span-->
-		<button type="submit" class="vmicon vm2-add_quantity_cart" name="updatecart.<?php echo $pkey ?>" title="<?php echo  vmText::_ ('COM_VIRTUEMART_CART_UPDATE') ?>" data-dynamic-update="1" ></button>
-		<button type="submit" class="vmicon vm2-remove_from_cart" name="delete.<?php echo $pkey ?>" title="<?php echo vmText::_ ('COM_VIRTUEMART_CART_DELETE') ?>" ></button>
+	<td class="vm-cart-item-quantity" >
+        <?php /* Breakdesigns Product Builder Modification */ ?>
+        <?php if(empty($productBuilderClass)) : ?>
+        <?php /* END Breakdesigns Product Builder Modification */ ?>
+            <?php
+            if ($prow->step_order_level)
+                $step=$prow->step_order_level;
+            else
+                $step=1;
+            if($step==0)
+                $step=1;
+            ?>
+            <input type="text"
+                onblur="Virtuemart.checkQuantity(this,<?php echo $step?>,'<?php echo vmText::_ ('COM_VIRTUEMART_WRONG_AMOUNT_ADDED',true)?>');"
+                onclick="Virtuemart.checkQuantity(this,<?php echo $step?>,'<?php echo vmText::_ ('COM_VIRTUEMART_WRONG_AMOUNT_ADDED',true)?>');"
+                onchange="Virtuemart.checkQuantity(this,<?php echo $step?>,'<?php echo vmText::_ ('COM_VIRTUEMART_WRONG_AMOUNT_ADDED',true)?>');"
+                onsubmit="Virtuemart.checkQuantity(this,<?php echo $step?>,'<?php echo vmText::_ ('COM_VIRTUEMART_WRONG_AMOUNT_ADDED',true)?>');"
+                title="<?php echo  vmText::_('COM_VIRTUEMART_CART_UPDATE') ?>" class="quantity-input js-recalculate" size="3" maxlength="4" name="quantity[<?php echo $pkey; ?>]" value="<?php echo $prow->quantity ?>" />
+            <!--span class="quantity-controls js-recalculate">
+                    <input type="button" class="quantity-controls quantity-plus"/>
+                    <input type="button" class="quantity-controls quantity-minus"/>
+            </span-->
+            <button type="submit" class="vmicon vm2-add_quantity_cart" name="updatecart.<?php echo $pkey ?>" title="<?php echo  vmText::_ ('COM_VIRTUEMART_CART_UPDATE') ?>" data-dynamic-update="1" ></button>
+            <button type="submit" class="vmicon vm2-remove_from_cart" name="delete.<?php echo $pkey ?>" title="<?php echo vmText::_ ('COM_VIRTUEMART_CART_DELETE') ?>" ></button>
+        <?php /* Breakdesigns Product Builder Modification */ ?>
+        <?php else : ?>
+            <span><?php echo $prow->quantity; ?></span>
+        <?php endif; ?>
+		<?php /* END Breakdesigns Product Builder Modification */ ?>
 	</td>
 	<?php if (VmConfig::get ('show_tax')) { ?>
 	<td class="vm-cart-item-tax" ><?php echo "<span class='priceColor2'>" . $this->currencyDisplay->createPriceDiv ('taxAmount', '', $prow->prices, FALSE, FALSE, $prow->quantity, false, true) . "</span>" ?></td>
