@@ -36,7 +36,7 @@ In this way the user cannot mess with the configuration and can only remove the 
 
 <br>
 
-Each overrides has as base the original version and the changes can be compared (directly in github) and adopted to other templates/extensions/plugins which create the cart layouts.
+Each overrides has as base the original version and the changes can be compared and adopted to other templates/extensions/plugins which create the cart layouts.
 
 ---
 
